@@ -1,0 +1,3 @@
+# API
+
+OpenAPI via FastAPI.

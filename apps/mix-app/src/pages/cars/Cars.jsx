@@ -4,6 +4,7 @@ import { carsAPI, fileUrl, getErrMsg } from '../../api/client'
 import { safeList } from '../../hooks/useApi'
 import { useToast } from '../../context/ToastContext'
 import { PageHeader, Button, Badge, Table, Pagination, Select, Card, Empty, Spinner, Modal, Input, Textarea, Confirm, Breadcrumb, ErrorAlert } from '../../components/ui/index'
+import { AvailabilityCalendar } from '../../components/ui/AvailabilityCalendar'
 
 const TRANS = [{ value:'manual', label:'Manual' }, { value:'automatic', label:'Automatik' }]
 const FUEL  = [{ value:'petrol', label:'Benzinë' }, { value:'diesel', label:'Dizël' }, { value:'hybrid', label:'Hibrid' }, { value:'electric', label:'Elektrik' }]
@@ -328,6 +329,10 @@ export function CarDetail() {
                 </div>
               ))}
             </div>
+          </Card>
+
+          <Card>
+            <AvailabilityCalendar carId={car?.id} />
           </Card>
         </div>
       </div>

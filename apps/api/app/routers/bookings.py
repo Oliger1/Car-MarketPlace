@@ -13,6 +13,9 @@ from app.deps.pagination import get_pagination_params, PaginationParams
 from app.models.user import User
 from app.schemas.booking import BookingCreate, BookingUpdate, BookingResponse
 from app.services.booking_service import BookingService
+from app.models.booking import Booking
+from app.models.car import Car
+from datetime import datetime, date
 
 router = APIRouter()
 
@@ -43,6 +46,45 @@ async def list_bookings(
         "page": pagination.page,
         "limit": pagination.limit
     }
+
+@router.get("/timeline")
+async def get_timeline(
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        company_id: UUID = Depends(require_company_id),
+        db: Session = Depends(get_db)
+):
+
+
+    query = db.query(Booking).filter(
+        Booking.company_id == company_id,
+        Booking.status != "cancelled"
+    )
+
+    if date_from:
+        query = query.filter(Booking.date_to >= date_from)
+    if date_to:
+        query = query.filter(Booking.date_from <= date_to)
+
+    bookings = query.all()
+
+    result = []
+    for b in bookings:
+        result.append({
+            "id": str(b.id),
+            "car_id": str(b.car_id),
+            "car_title": b.car.title if b.car else "—",
+            "car_photo": b.car.photos[0].path if b.car and b.car.photos else None,
+            "date_from": str(b.date_from),
+            "date_to": str(b.date_to),
+            "status": b.status,
+            "price_total": float(b.price_total) if b.price_total else None,
+            "currency": b.currency,
+            "notes": b.notes,
+            "customer_name": b.customer.name if b.customer else None,
+        })
+
+    return {"data": result}
 
 
 @router.post("/", response_model=BookingResponse, status_code=status.HTTP_201_CREATED)

@@ -4,6 +4,7 @@ import { bookingsAPI, carsAPI, customersAPI, getErrMsg } from '../../api/client'
 import { safeList } from '../../hooks/useApi'
 import { useToast } from '../../context/ToastContext'
 import { PageHeader, Button, Badge, Table, Pagination, Select, Card, Empty, Spinner, Modal, Input, Textarea, Confirm, Breadcrumb } from '../../components/ui/index'
+import { generateContract } from '../../utils/contract'
 
 const STATUS_OPTS = [
   { value:'', label:'Të gjitha' },
@@ -126,14 +127,26 @@ export function BookingDetail() {
   const navigate = useNavigate()
   const toast    = useToast()
   const [booking, setBooking] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving]   = useState(false)
+  const [car, setCar]         = useState(null)
+  const [customer, setCustomer] = useState(null)
+  const [company, setCompany]   = useState(null)
+  const [loading, setLoading]   = useState(true)
+  const [saving, setSaving]     = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [showCancel, setShowCancel] = useState(false)
   const [form, setForm] = useState({})
 
   const load = useCallback(async () => {
-    try { const r = await bookingsAPI.get(id); setBooking(r.data); setForm(r.data) }
+    try {
+      const r = await bookingsAPI.get(id)
+      setBooking(r.data)
+      setForm(r.data)
+      // Load related data for contract
+      if (r.data?.car_id) carsAPI.get(r.data.car_id).then(cr => setCar(cr.data)).catch(()=>{})
+      if (r.data?.customer_id) customersAPI.get(r.data.customer_id).then(cr => setCustomer(cr.data)).catch(()=>{})
+      // Company from localStorage or me endpoint
+      try { const me = await fetch('/api/me/', {credentials:'include'}).then(r=>r.json()); setCompany(me?.company) } catch {}
+    }
     catch { navigate('/bookings') }
     finally { setLoading(false) }
   }, [id])
@@ -158,13 +171,23 @@ export function BookingDetail() {
     catch(e) { toast(getErrMsg(e), 'error'); setCancelling(false) }
   }
 
+  const printContract = () => {
+    generateContract(booking, car, customer, company)
+  }
+
   if (loading) return <div style={{ display:'flex', justifyContent:'center', padding:80 }}><Spinner size={36} /></div>
 
   return (
     <div className="fade-up">
       <Breadcrumb items={[{label:'Rezervimet', to:'/bookings'}, {label:'Detajet'}]} />
       <PageHeader title={`${fmtDate(booking?.date_from)} — ${fmtDate(booking?.date_to)}`}
-        actions={booking?.status !== 'cancelled' && <Button variant="danger" size="sm" onClick={() => setShowCancel(true)}>Anulo rezervimin</Button>}
+        actions={<div style={{ display:'flex', gap:10 }}>
+          <Button variant="secondary" size="sm" onClick={printContract}
+            icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>}>
+            Printo Kontratë
+          </Button>
+          {booking?.status !== 'cancelled' && <Button variant="danger" size="sm" onClick={() => setShowCancel(true)}>Anulo</Button>}
+        </div>}
       />
       <div style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:20 }}>
         <Card>

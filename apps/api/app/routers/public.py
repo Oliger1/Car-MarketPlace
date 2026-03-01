@@ -48,6 +48,59 @@ async def search_companies(
     }
 
 
+@router.get("/cars")
+async def search_cars(
+        city: Optional[str] = None,
+        q: Optional[str] = None,
+        pagination: PaginationParams = Depends(get_pagination_params),
+        db: Session = Depends(get_db)
+):
+    """
+    Kërko makina nga të gjitha kompanitë (publik)
+    """
+    from app.models.company import Company
+    from sqlalchemy import or_
+
+    query = db.query(Car).join(
+        Company, Car.company_id == Company.id
+    ).filter(
+        Car.is_published == True,
+        Car.status == "active",
+        Company.is_published == True,
+    )
+
+    if city:
+        query = query.filter(Company.city.ilike(f"%{city}%"))
+
+    if q:
+        query = query.filter(
+            or_(
+                Car.title.ilike(f"%{q}%"),
+                Car.make.ilike(f"%{q}%"),
+                Car.model.ilike(f"%{q}%"),
+            )
+        )
+
+    total = query.count()
+    cars = query.order_by(Car.created_at.desc()).offset(pagination.skip).limit(pagination.limit).all()
+
+    # Build response with company info
+    result = []
+    for car in cars:
+        car_data = CarPublic.model_validate(car).model_dump()
+        car_data["company_name"] = car.company.name if car.company else None
+        car_data["company_slug"] = car.company.slug if car.company else None
+        car_data["company_logo"] = car.company.logo_path if car.company else None
+        result.append(car_data)
+
+    return {
+        "data": result,
+        "total": total,
+        "page": pagination.page,
+        "limit": pagination.limit,
+    }
+
+
 @router.get("/company/{slug}", response_model=CompanyPublic)
 async def get_company(slug: str, db: Session = Depends(get_db)):
     """

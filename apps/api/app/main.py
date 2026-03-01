@@ -1,11 +1,11 @@
-"""
-FastAPI Application - Main Entry Point
-"""
+""" FastAPI Application - Main Entry Point """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+import os
 
 from app.core.config import settings
 from app.core.logging import setup_logging
@@ -43,6 +43,10 @@ app = FastAPI(
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
 )
+
+# Serve uploaded files
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Add state
 app.state.limiter = limiter

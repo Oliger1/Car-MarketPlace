@@ -17,8 +17,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
     # CORS - as comma-separated string
-    ALLOWED_ORIGINS: str = "http://localhost:3000"
-
+    ALLOWED_ORIGINS: str = "http://localhost:5173"
     # Upload settings
     UPLOAD_DIR: str = "./uploads"
     MAX_UPLOAD_SIZE: int = 5242880  # 5MB
@@ -27,6 +26,8 @@ class Settings(BaseSettings):
     # App settings
     ENVIRONMENT: str = "development"
     TIMEZONE: str = "Europe/Tirane"
+
+    MAX_PHOTOS_PER_CAR: int = 5
 
     model_config = SettingsConfigDict(
         env_file=".env",

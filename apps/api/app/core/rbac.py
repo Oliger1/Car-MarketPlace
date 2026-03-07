@@ -6,7 +6,7 @@ from typing import Iterable, Set
 class Permission:
     name: str
 
-# Permissions (fillo me këto, pastaj shto)
+# Permissions (fillojme me këto, pastaj shtojme)
 P_COMPANY_READ   = Permission("company:read")
 P_COMPANY_WRITE  = Permission("company:write")
 P_CARS_READ      = Permission("cars:read")

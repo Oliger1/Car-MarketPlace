@@ -32,7 +32,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-mix}:${POSTGRES_PASSWORD:-mixdev}@db:5432/${POSTGRES_DB:-mix}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-mix}:${POSTGRES_PASSWORD:-mixdev}@db:5432/${POSTGRES_DB:-mix}
       SECRET_KEY: ${SECRET_KEY:-dev-only-change-me}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173}
       UPLOAD_DIR: /uploads

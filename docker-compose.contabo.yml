@@ -37,7 +37,7 @@ services:
     ports:
       - "127.0.0.1:8001:8000"
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-mix}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-mix}
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-mix}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-mix}
       SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://${DOMAIN}}
       UPLOAD_DIR: /uploads

@@ -7,9 +7,22 @@ from sqlalchemy.orm import declarative_base
 
 from app.core.config import settings
 
+
+def _database_url() -> str:
+    """Force psycopg2 driver (package: psycopg2-binary)."""
+    url = settings.DATABASE_URL
+    if url.startswith("postgresql+psycopg://"):
+        return "postgresql+psycopg2://" + url[len("postgresql+psycopg://") :]
+    if url.startswith("postgresql://"):
+        return "postgresql+psycopg2://" + url[len("postgresql://") :]
+    if url.startswith("postgres://"):
+        return "postgresql+psycopg2://" + url[len("postgres://") :]
+    return url
+
+
 # Create engine
 engine = create_engine(
-    settings.DATABASE_URL,
+    _database_url(),
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,

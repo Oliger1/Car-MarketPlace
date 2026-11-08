@@ -70,7 +70,7 @@ export default function Company() {
         }
       />
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 310px', gap:20 }}>
+      <div className="split-layout">
         <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
           <Card>
             <h3 style={{ fontSize:'.95rem', marginBottom:18 }}>Informacioni bazë</h3>

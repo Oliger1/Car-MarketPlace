@@ -96,6 +96,7 @@ class CarPublic(BaseModel):
     description: Optional[str]
     location_text: Optional[str]
     photos: List[CarPhotoResponse] = []
+    unavailable_ranges: List[dict] = []
 
     class Config:
         from_attributes = True

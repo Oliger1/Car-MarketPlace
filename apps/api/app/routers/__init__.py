@@ -10,6 +10,7 @@ from app.routers import bookings
 from app.routers import booking_requests
 from app.routers import customers
 from app.routers import billing
+from app.routers import admin
 from app.routers import files
 
 __all__ = [
@@ -22,5 +23,6 @@ __all__ = [
     "booking_requests",
     "customers",
     "billing",
+    "admin",
     "files",
 ]

@@ -49,7 +49,7 @@ class PhotoService:
             )
 
         # Validate file
-        if not file.content_type in settings.ALLOWED_IMAGE_TYPES:
+        if file.content_type not in settings.get_allowed_image_types():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Formati i fotove jo i vlefshëm. Përdorni JPG, PNG ose WEBP"

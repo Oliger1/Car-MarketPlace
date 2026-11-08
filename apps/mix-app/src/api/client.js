@@ -7,13 +7,13 @@ const http = axios.create({
 })
 
 http.interceptors.response.use(
-  (r) => {
-    console.log(`[API] ${r.config.method?.toUpperCase()} ${r.config.url}`, r.data)
-    return r
-  },
+  (r) => r,
   (err) => {
-    console.error(`[API ERR] ${err.config?.method?.toUpperCase()} ${err.config?.url}`, err.response?.status, err.response?.data)
-    if (err.response?.status === 401 && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
+    const url = err.config?.url || ''
+    const path = window.location.pathname
+    const isPublic = path === '/' || path.startsWith('/p/') || path.startsWith('/login') || path.startsWith('/register') || path.startsWith('/forgot') || path.startsWith('/reset')
+    const isMe = url.includes('/me')
+    if (err.response?.status === 401 && !isPublic && !isMe) {
       window.location.replace('/login')
     }
     return Promise.reject(err)
@@ -39,7 +39,8 @@ export const getErrMsg = (err) => {
 export const fileUrl = (path) => {
   if (!path) return null
   if (path.startsWith('http')) return path
-  return `http://localhost:8000${path}`
+  if (path.startsWith('/uploads') || path.startsWith('/api/files')) return path
+  return `/uploads/${path.replace(/^\/+/, '')}`
 }
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────

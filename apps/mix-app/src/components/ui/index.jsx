@@ -49,7 +49,7 @@ export function Button({ children, variant = 'primary', size = 'md', loading, di
         opacity: off ? .55 : 1,
         transition: 'all var(--t)',
         transform: hover && !off ? 'translateY(-1px)' : 'none',
-        boxShadow: hover && !off && variant === 'primary' ? '0 4px 20px rgba(240,165,0,.25)' : 'none',
+        boxShadow: hover && !off && variant === 'primary' ? '0 8px 24px rgba(240,180,41,.28)' : 'none',
         whiteSpace: 'nowrap', letterSpacing: '.01em',
         fontFamily: 'var(--f-body)',
         ...style,
@@ -210,8 +210,10 @@ export function Badge({ status = '', label, style }) {
 export function Card({ children, padding = 24, style }) {
   return (
     <div style={{
-      background: 'var(--bg-2)', border: '1px solid var(--border)',
+      background: 'linear-gradient(180deg, rgba(255,255,255,0.028), transparent 42%), var(--bg-2)',
+      border: '1px solid var(--border)',
       borderRadius: 'var(--r-lg)', padding,
+      boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
       ...style,
     }}>
       {children}
@@ -365,8 +367,8 @@ export function PageHeader({ title, subtitle, actions }) {
   return (
     <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:28, gap:16, flexWrap:'wrap' }}>
       <div>
-        <h1 style={{ fontSize:'1.55rem', marginBottom:3 }}>{title}</h1>
-        {subtitle && <p style={{ color:'var(--text-3)', fontSize:'.875rem' }}>{subtitle}</p>}
+        <h1 style={{ fontSize:'1.7rem', marginBottom:6 }}>{title}</h1>
+        {subtitle && <p style={{ color:'var(--text-2)', fontSize:'.9rem', maxWidth:520 }}>{subtitle}</p>}
       </div>
       {actions && <div style={{ display:'flex', gap:10, flexShrink:0 }}>{actions}</div>}
     </div>
@@ -377,12 +379,12 @@ export function PageHeader({ title, subtitle, actions }) {
 export function StatCard({ label, value, icon, color = 'var(--accent)', trend }) {
   return (
     <Card>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
-        <span style={{ fontSize:'.75rem', color:'var(--text-3)', fontWeight:600, letterSpacing:'.05em', textTransform:'uppercase' }}>{label}</span>
-        <div style={{ width:34, height:34, borderRadius:'var(--r)', background:`${color}18`, border:`1px solid ${color}30`, display:'flex', alignItems:'center', justifyContent:'center', color }}>{icon}</div>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+        <span style={{ fontSize:'.72rem', color:'var(--text-3)', fontWeight:700, letterSpacing:'.08em', textTransform:'uppercase' }}>{label}</span>
+        <div style={{ width:38, height:38, borderRadius:12, background:`${color}18`, border:`1px solid ${color}30`, display:'flex', alignItems:'center', justifyContent:'center', color }}>{icon}</div>
       </div>
-      <div style={{ fontSize:'1.9rem', fontFamily:'var(--f-display)', fontWeight:800, lineHeight:1 }}>{value ?? '—'}</div>
-      {trend && <div style={{ fontSize:'.78rem', color:'var(--text-3)', marginTop:6 }}>{trend}</div>}
+      <div style={{ fontSize:'2.05rem', fontFamily:'var(--f-display)', fontWeight:800, lineHeight:1, letterSpacing:'-0.03em' }}>{value ?? '—'}</div>
+      {trend && <div style={{ fontSize:'.78rem', color:'var(--text-3)', marginTop:8 }}>{trend}</div>}
     </Card>
   )
 }

@@ -242,7 +242,7 @@ export function CarDetail() {
         </div>}
       />
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 320px', gap:20 }}>
+      <div className="split-layout">
         <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
           <Card>
             <h3 style={{ fontSize:'.95rem', marginBottom:18 }}>Informacioni</h3>

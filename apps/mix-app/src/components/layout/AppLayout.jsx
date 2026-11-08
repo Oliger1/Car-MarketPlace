@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
@@ -38,7 +38,8 @@ function Icon({ name, size=17 }) {
     credit:   <><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></>,
     logout:   <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></>,
     menu:     <><path d="M3 12h18M3 6h18M3 18h18"/></>,
-    chevron:  <><path d="m9 18 6-6-6-6"/></>,
+    close:    <><path d="M18 6 6 18M6 6l12 12"/></>,
+    store:    <><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></>,
   }
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -47,20 +48,20 @@ function Icon({ name, size=17 }) {
   )
 }
 
-function NavLink({ item, collapsed }) {
+function NavLink({ item, collapsed, onNavigate }) {
   const { pathname } = useLocation()
   const active = pathname === item.to || pathname.startsWith(item.to + '/')
 
   return (
-    <Link to={item.to} title={collapsed ? item.label : undefined}
+    <Link to={item.to} title={collapsed ? item.label : undefined} onClick={onNavigate}
       style={{
-        display:'flex', alignItems:'center', gap:9,
-        padding: collapsed ? '9px 12px' : '9px 13px',
-        borderRadius:'var(--r)',
-        color: active ? 'var(--accent)' : 'var(--text-2)',
+        display:'flex', alignItems:'center', gap:10,
+        padding: collapsed ? '10px 12px' : '10px 13px',
+        borderRadius:12,
+        color: active ? 'var(--accent-2)' : 'var(--text-2)',
         background: active ? 'var(--accent-bg)' : 'transparent',
         border: `1px solid ${active ? 'var(--accent-border)' : 'transparent'}`,
-        fontSize:'.875rem', fontWeight: active ? 600 : 400,
+        fontSize:'.875rem', fontWeight: active ? 600 : 450,
         textDecoration:'none', transition:'all var(--t)',
         justifyContent: collapsed ? 'center' : 'flex-start',
         whiteSpace:'nowrap',
@@ -78,97 +79,119 @@ export default function AppLayout({ children }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
-  const w = collapsed ? 64 : 248
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [mobileOpen])
 
   const doLogout = async () => {
     await logout()
     navigate('/login')
   }
 
+  const closeMobile = () => setMobileOpen(false)
+
   return (
-    <div style={{ display:'flex', minHeight:'100vh' }}>
-      {/* Sidebar */}
-      <aside style={{
-        width:w, flexShrink:0,
-        background:'var(--bg-2)', borderRight:'1px solid var(--border)',
-        display:'flex', flexDirection:'column',
-        position:'sticky', top:0, height:'100vh',
-        transition:'width .2s ease', overflow:'hidden',
-      }}>
-        {/* Logo */}
+    <div className="app-shell">
+      {mobileOpen && <div className="sidebar-backdrop" onClick={closeMobile} />}
+
+      <aside className={`sidebar ${mobileOpen ? 'is-open' : ''}`} style={{ width: collapsed && !mobileOpen ? 68 : undefined }}>
         <div style={{
-          padding: collapsed ? '18px 12px' : '18px 18px',
+          padding: collapsed && !mobileOpen ? '20px 12px' : '20px 18px',
           borderBottom:'1px solid var(--border)',
           display:'flex', alignItems:'center',
-          justifyContent: collapsed ? 'center' : 'space-between',
+          justifyContent: collapsed && !mobileOpen ? 'center' : 'space-between',
           gap:10,
         }}>
-          {!collapsed && (
-            <Link to="/dashboard" style={{ fontFamily:'var(--f-display)', fontSize:'1.5rem', fontWeight:800, color:'var(--text-1)', letterSpacing:'-.02em' }}>
-              Mix<span style={{ color:'var(--accent)' }}>.</span>
+          {(!collapsed || mobileOpen) && (
+            <Link to="/dashboard" onClick={closeMobile} style={{ display:'flex', alignItems:'center', gap:10, color:'var(--text-1)', textDecoration:'none' }}>
+              <span className="logo-mark">M</span>
+              <span style={{ fontFamily:'var(--f-display)', fontSize:'1.35rem', fontWeight:800, letterSpacing:'-.03em' }}>
+                Mix<span style={{ color:'var(--accent)' }}>.</span>
+              </span>
             </Link>
           )}
-          <button onClick={() => setCollapsed(v => !v)} style={{
-            background:'none', border:'none', color:'var(--text-3)',
+          <button onClick={() => mobileOpen ? setMobileOpen(false) : setCollapsed(v => !v)} style={{
+            background:'none', border:'1px solid var(--border)', color:'var(--text-3)',
             cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center',
-            padding:4, borderRadius:'var(--r-sm)', transition:'color var(--t)', flexShrink:0,
+            padding:6, borderRadius:10, transition:'all var(--t)', flexShrink:0,
           }}
             onMouseEnter={e => e.currentTarget.style.color='var(--text-1)'}
             onMouseLeave={e => e.currentTarget.style.color='var(--text-3)'}
           >
-            <Icon name="menu" />
+            <Icon name={mobileOpen ? 'close' : 'menu'} />
           </button>
         </div>
 
-        {/* Nav */}
-        <nav style={{ flex:1, padding:'14px 8px', overflowY:'auto', display:'flex', flexDirection:'column', gap:20 }}>
+        <nav style={{ flex:1, padding:'16px 10px', overflowY:'auto', display:'flex', flexDirection:'column', gap:22 }}>
           {NAV.map(g => (
             <div key={g.group}>
-              {!collapsed && (
-                <div style={{ fontSize:'.65rem', fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase', color:'var(--text-3)', padding:'0 7px', marginBottom:5 }}>
+              {(!collapsed || mobileOpen) && (
+                <div style={{ fontSize:'.65rem', fontWeight:700, letterSpacing:'.12em', textTransform:'uppercase', color:'var(--text-3)', padding:'0 8px', marginBottom:7 }}>
                   {g.group}
                 </div>
               )}
-              <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
-                {g.items.map(item => <NavLink key={item.to} item={item} collapsed={collapsed} />)}
+              <div style={{ display:'flex', flexDirection:'column', gap:3 }}>
+                {g.items.map(item => <NavLink key={item.to} item={item} collapsed={collapsed && !mobileOpen} onNavigate={closeMobile} />)}
               </div>
             </div>
           ))}
         </nav>
 
-        {/* User */}
-        <div style={{
-          padding: collapsed ? '14px 12px' : '14px 13px',
-          borderTop:'1px solid var(--border)',
-          display:'flex', alignItems:'center',
-          justifyContent: collapsed ? 'center' : 'space-between', gap:8,
-        }}>
-          {!collapsed && (
-            <div style={{ minWidth:0, flex:1 }}>
-              <div className="truncate" style={{ fontSize:'.8rem', fontWeight:600 }}>{user?.email}</div>
-              <div style={{ fontSize:'.7rem', color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'.05em', marginTop:1 }}>{user?.role}</div>
-            </div>
+        <div style={{ padding: collapsed && !mobileOpen ? '12px' : '12px 12px 16px', borderTop:'1px solid var(--border)' }}>
+          {(!collapsed || mobileOpen) && (
+            <Link to="/" onClick={closeMobile} style={{
+              display:'flex', alignItems:'center', gap:8, marginBottom:12,
+              padding:'9px 12px', borderRadius:12, border:'1px solid var(--border)',
+              color:'var(--text-2)', fontSize:'.8rem', textDecoration:'none',
+            }}>
+              <Icon name="store" size={15} /> Marketplace
+            </Link>
           )}
-          <button onClick={doLogout} title="Dil"
-            style={{
-              flexShrink:0, background:'none', border:'1px solid var(--border)',
-              borderRadius:'var(--r-sm)', color:'var(--text-3)',
-              cursor:'pointer', padding:'7px 8px',
-              display:'flex', alignItems:'center', justifyContent:'center',
-              transition:'all var(--t)',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor='var(--red)'; e.currentTarget.style.color='var(--red)' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.color='var(--text-3)' }}
-          >
-            <Icon name="logout" size={15} />
-          </button>
+          <div style={{
+            display:'flex', alignItems:'center',
+            justifyContent: collapsed && !mobileOpen ? 'center' : 'space-between', gap:8,
+          }}>
+            {(!collapsed || mobileOpen) && (
+              <div style={{ minWidth:0, flex:1 }}>
+                <div className="truncate" style={{ fontSize:'.8rem', fontWeight:600 }}>{user?.email}</div>
+                <div style={{ fontSize:'.68rem', color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'.06em', marginTop:2 }}>{user?.role}</div>
+              </div>
+            )}
+            <button onClick={doLogout} title="Dil"
+              style={{
+                flexShrink:0, background:'none', border:'1px solid var(--border)',
+                borderRadius:10, color:'var(--text-3)',
+                cursor:'pointer', padding:'7px 8px',
+                display:'flex', alignItems:'center', justifyContent:'center',
+                transition:'all var(--t)',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor='var(--red)'; e.currentTarget.style.color='var(--red)' }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.color='var(--text-3)' }}
+            >
+              <Icon name="logout" size={15} />
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* Main */}
-      <main style={{ flex:1, minWidth:0, padding:'32px 36px', overflowY:'auto' }} className="fade-up">
-        {children}
-      </main>
+      <div style={{ flex:1, minWidth:0, display:'flex', flexDirection:'column' }}>
+        <div className="mobile-bar">
+          <button onClick={() => setMobileOpen(true)} style={{ background:'none', border:'1px solid var(--border)', borderRadius:10, color:'var(--text-1)', padding:7, display:'flex' }}>
+            <Icon name="menu" />
+          </button>
+          <Link to="/dashboard" style={{ display:'flex', alignItems:'center', gap:8, color:'var(--text-1)', textDecoration:'none', fontFamily:'var(--f-display)', fontWeight:800 }}>
+            <span className="logo-mark" style={{ width:28, height:28, fontSize:'.9rem', borderRadius:9 }}>M</span>
+            Mix.
+          </Link>
+          <div style={{ width:34 }} />
+        </div>
+        <main className="app-main fade-up">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

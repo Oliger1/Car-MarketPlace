@@ -19,6 +19,7 @@ class Customer(Base):
     )
     name = Column(String(200), nullable=False)
     phone = Column(String(50), nullable=False)
+    email = Column(String(255), nullable=True)
     id_number = Column(String(50))
     notes = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

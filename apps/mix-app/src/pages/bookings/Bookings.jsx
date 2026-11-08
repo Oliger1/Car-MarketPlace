@@ -189,7 +189,7 @@ export function BookingDetail() {
           {booking?.status !== 'cancelled' && <Button variant="danger" size="sm" onClick={() => setShowCancel(true)}>Anulo</Button>}
         </div>}
       />
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:20 }}>
+      <div className="split-layout">
         <Card>
           <h3 style={{ fontSize:'.95rem', marginBottom:18 }}>Ndrysho</h3>
           <form onSubmit={save} style={{ display:'flex', flexDirection:'column', gap:14 }}>

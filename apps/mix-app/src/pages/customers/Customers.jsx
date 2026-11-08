@@ -119,7 +119,7 @@ export function CustomerDetail() {
     <div className="fade-up">
       <Breadcrumb items={[{label:'Klientët', to:'/customers'}, {label:cust?.name}]} />
       <PageHeader title={cust?.name} />
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 280px', gap:20 }}>
+      <div className="split-layout">
         <Card>
           <form onSubmit={save} style={{ display:'flex', flexDirection:'column', gap:14 }}>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>

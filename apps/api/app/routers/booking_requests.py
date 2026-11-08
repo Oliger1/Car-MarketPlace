@@ -1,8 +1,8 @@
 """
 Booking Requests Router
 """
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional
 from uuid import UUID
 
@@ -11,6 +11,9 @@ from app.deps.auth import require_staff_or_owner
 from app.deps.tenant import require_company_id
 from app.deps.pagination import get_pagination_params, PaginationParams
 from app.models.user import User
+from app.models.booking_request import BookingRequest, BookingRequestStatus
+from app.models.booking import Booking
+from app.models.company import Company
 from app.schemas.booking_request import (
     BookingRequestResponse,
     BookingRequestUpdate,
@@ -18,6 +21,7 @@ from app.schemas.booking_request import (
 )
 from app.schemas.booking import BookingResponse
 from app.services.booking_request_service import BookingRequestService
+from app.services.email_service import EmailService
 
 router = APIRouter()
 
@@ -57,8 +61,6 @@ async def get_booking_request(
     """
     Merr detajet e kërkesës
     """
-    from app.models.booking_request import BookingRequest
-
     request = db.query(BookingRequest).filter(
         BookingRequest.id == request_id,
         BookingRequest.company_id == company_id
@@ -84,8 +86,6 @@ async def update_booking_request(
     """
     Përditëso statusin e kërkesës
     """
-    from app.models.booking_request import BookingRequest
-
     request = db.query(BookingRequest).filter(
         BookingRequest.id == request_id,
         BookingRequest.company_id == company_id
@@ -97,7 +97,11 @@ async def update_booking_request(
             detail="Kërkesa nuk u gjet"
         )
 
-    request.status = data.status
+    try:
+        request.status = BookingRequestStatus(data.status)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Status i pavlefshëm")
+
     db.commit()
     db.refresh(request)
 
@@ -108,6 +112,7 @@ async def update_booking_request(
 async def convert_to_booking(
         request_id: UUID,
         data: BookingRequestConvert,
+        background_tasks: BackgroundTasks,
         company_id: UUID = Depends(require_company_id),
         current_user: User = Depends(require_staff_or_owner),
         db: Session = Depends(get_db)
@@ -116,4 +121,34 @@ async def convert_to_booking(
     Konverto kërkesën në rezervim
     """
     booking = BookingRequestService.convert_to_booking(db, request_id, company_id, data)
+
+    booking = (
+        db.query(Booking)
+        .options(joinedload(Booking.customer), joinedload(Booking.car))
+        .filter(Booking.id == booking.id)
+        .first()
+    )
+    company = db.query(Company).filter(Company.id == company_id).first()
+    req = db.query(BookingRequest).filter(BookingRequest.id == request_id).first()
+
+    client_email = None
+    client_name = "Klient"
+    if booking and booking.customer and booking.customer.email:
+        client_email = booking.customer.email
+        client_name = booking.customer.name
+    elif req and req.requester_email:
+        client_email = req.requester_email
+        client_name = req.requester_name
+
+    if client_email and booking:
+        background_tasks.add_task(
+            EmailService.send_booking_confirmed,
+            client_email,
+            client_name,
+            company.name if company else "",
+            str(booking.date_from),
+            str(booking.date_to),
+            booking.car.title if booking.car else None,
+        )
+
     return BookingResponse.model_validate(booking)

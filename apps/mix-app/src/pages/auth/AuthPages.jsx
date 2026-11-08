@@ -6,16 +6,39 @@ import { Button, Input, ErrorAlert } from '../../components/ui/index'
 
 function AuthShell({ title, subtitle, children }) {
   return (
-    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg)', padding:'40px 20px' }}>
-      <div style={{ width:'100%', maxWidth:420, animation:'fadeUp .3s ease' }}>
-        <Link to="/" style={{ fontFamily:'var(--f-display)', fontSize:'1.8rem', fontWeight:800, color:'var(--text-1)', display:'block', marginBottom:32 }}>
-          Mix<span style={{ color:'var(--accent)' }}>.</span>
+    <div className="auth-split">
+      <aside className="auth-visual">
+        <Link to="/" style={{ display:'flex', alignItems:'center', gap:12, color:'var(--text-1)', textDecoration:'none' }}>
+          <span className="logo-mark">M</span>
+          <span style={{ fontFamily:'var(--f-display)', fontSize:'1.5rem', fontWeight:800 }}>Mix<span style={{ color:'var(--accent)' }}>.</span></span>
         </Link>
-        <div style={{ marginBottom:28 }}>
-          <h1 style={{ fontSize:'1.5rem', marginBottom:4 }}>{title}</h1>
-          <p style={{ color:'var(--text-3)', fontSize:'.9rem' }}>{subtitle}</p>
+        <div>
+          <p style={{ color:'var(--accent)', fontSize:'.75rem', fontWeight:700, letterSpacing:'.14em', textTransform:'uppercase', marginBottom:16 }}>Për kompanitë rent-a-car</p>
+          <h2 style={{ fontSize:'2.6rem', lineHeight:1.08, maxWidth:420, marginBottom:18 }}>
+            Flota, rezervimet dhe klientët në një vend.
+          </h2>
+          <p style={{ color:'var(--text-2)', maxWidth:380, fontSize:'1rem', lineHeight:1.7 }}>
+            Publikoni makinat, merrni kërkesa nga tregu dhe ktheni ato në rezervime — pa Excel, pa çrregullim.
+          </p>
         </div>
-        {children}
+        <div style={{ display:'flex', gap:28, color:'var(--text-3)', fontSize:'.8rem' }}>
+          <div><strong style={{ display:'block', color:'var(--text-1)', fontSize:'1.2rem', fontFamily:'var(--f-display)' }}>30 ditë</strong>provë falas</div>
+          <div><strong style={{ display:'block', color:'var(--text-1)', fontSize:'1.2rem', fontFamily:'var(--f-display)' }}>0 €</strong>në fillim</div>
+          <div><strong style={{ display:'block', color:'var(--text-1)', fontSize:'1.2rem', fontFamily:'var(--f-display)' }}>1 panel</strong>për gjithçka</div>
+        </div>
+      </aside>
+      <div className="auth-form-wrap">
+        <div style={{ width:'100%', maxWidth:440, animation:'fadeUp .35s ease' }}>
+          <Link to="/" className="auth-mobile-brand" style={{ display:'none', alignItems:'center', gap:10, color:'var(--text-1)', textDecoration:'none', marginBottom:28 }}>
+            <span className="logo-mark">M</span>
+            <span style={{ fontFamily:'var(--f-display)', fontSize:'1.4rem', fontWeight:800 }}>Mix<span style={{ color:'var(--accent)' }}>.</span></span>
+          </Link>
+          <div style={{ marginBottom:28 }}>
+            <h1 style={{ fontSize:'1.65rem', marginBottom:6 }}>{title}</h1>
+            <p style={{ color:'var(--text-2)', fontSize:'.95rem' }}>{subtitle}</p>
+          </div>
+          {children}
+        </div>
       </div>
     </div>
   )
@@ -39,7 +62,7 @@ export function Login() {
   }
 
   return (
-    <AuthShell title="Mirë se vini" subtitle="Hyni në llogarinë tuaj">
+    <AuthShell title="Mirë se vini" subtitle="Hyni në panelin e kompanisë suaj">
       <ErrorAlert message={err} />
       <form onSubmit={submit} style={{ display:'flex', flexDirection:'column', gap:16 }}>
         <Input label="Email" type="email" value={form.email} onChange={set('email')} placeholder="email@kompania.com" required autoFocus />
@@ -81,17 +104,17 @@ export function Register() {
   }
 
   return (
-    <AuthShell title="Regjistro kompaninë" subtitle="Fillo provën 14-ditore falas">
+    <AuthShell title="Hapni kompaninë" subtitle="Filloni me 30 ditë provë — pa kartë">
       <ErrorAlert message={err} />
       <form onSubmit={submit} style={{ display:'flex', flexDirection:'column', gap:14 }}>
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+        <div className="form-grid-2">
           <Input label="Emri i kompanisë *" value={form.company_name} onChange={set('company_name')} placeholder="Auto Plus" required autoFocus />
           <Input label="Qyteti *" value={form.city} onChange={set('city')} placeholder="Tiranë" required />
         </div>
-        <Input label="Slug (URL) *" value={form.slug} onChange={set('slug')} placeholder="auto-plus" required hint="Vetëm shkronja, numra dhe vizë" />
+        <Input label="Slug (URL) *" value={form.slug} onChange={set('slug')} placeholder="auto-plus" required hint="mix.app/p/slug-i-juaj" />
         <Input label="Email *" type="email" value={form.email} onChange={set('email')} placeholder="info@autoplus.al" required />
         <Input label="Fjalëkalimi *" type="password" value={form.password} onChange={set('password')} placeholder="Min. 8 karaktere" required />
-        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
+        <div className="form-grid-2">
           <Input label="Telefon" value={form.phone} onChange={set('phone')} placeholder="+355 69..." />
           <Input label="WhatsApp" value={form.whatsapp} onChange={set('whatsapp')} placeholder="+355 69..." />
         </div>
@@ -119,14 +142,14 @@ export function ForgotPassword() {
   }
 
   return (
-    <AuthShell title="Fjalëkalim i harruar" subtitle="Do të dërgojmë udhëzimet në email">
+    <AuthShell title="Fjalëkalim i harruar" subtitle="Do t’ju dërgojmë udhëzimet në email">
       <Link to="/login" style={{ display:'inline-flex', alignItems:'center', gap:5, color:'var(--text-3)', fontSize:'.85rem', marginBottom:20 }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m15 18-6-6 6-6"/></svg>
         Kthehu
       </Link>
       {sent ? (
-        <div style={{ background:'var(--green-bg)', border:'1px solid rgba(34,197,94,.3)', borderRadius:'var(--r)', padding:16, color:'var(--green)', textAlign:'center' }}>
-          ✓ Udhëzimet u dërguan! Kontrolloni emailin.
+        <div style={{ background:'var(--green-bg)', border:'1px solid rgba(52,211,153,.3)', borderRadius:'var(--r)', padding:16, color:'var(--green)', textAlign:'center' }}>
+          Udhëzimet u dërguan. Kontrolloni emailin.
         </div>
       ) : (
         <>
@@ -160,8 +183,8 @@ export function ResetPassword() {
   return (
     <AuthShell title="Rivendos fjalëkalimin" subtitle="Shkruani fjalëkalimin tuaj të ri">
       {done ? (
-        <div style={{ background:'var(--green-bg)', border:'1px solid rgba(34,197,94,.3)', borderRadius:'var(--r)', padding:16, color:'var(--green)', textAlign:'center' }}>
-          ✓ Fjalëkalimi u ndryshua!{' '}<Link to="/login" style={{ color:'var(--green)', textDecoration:'underline' }}>Hyni tani</Link>
+        <div style={{ background:'var(--green-bg)', border:'1px solid rgba(52,211,153,.3)', borderRadius:'var(--r)', padding:16, color:'var(--green)', textAlign:'center' }}>
+          Fjalëkalimi u ndryshua.{' '}<Link to="/login" style={{ color:'var(--green)', textDecoration:'underline' }}>Hyni tani</Link>
         </div>
       ) : (
         <>

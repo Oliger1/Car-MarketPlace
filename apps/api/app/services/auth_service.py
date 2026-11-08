@@ -111,27 +111,16 @@ class AuthService:
         return user
 
     @staticmethod
-    def initiate_password_reset(db: Session, email: str) -> str:
-        """
-        Create password reset token
-        """
+    def initiate_password_reset(db: Session, email: str) -> str | None:
+        """Create password reset token without revealing whether the email exists."""
         user = db.query(User).filter(User.email == email).first()
-
         if not user:
-            # Don't reveal if email exists
-            raise HTTPException(
-                status_code=status.HTTP_200_OK,
-                detail="Nëse email-i ekziston, do të merrni një link për rivendosje"
-            )
+            return None
 
-        # Create token
         token = create_password_reset_token(email)
-
-        # Store token in database
         user.reset_token = token
         user.reset_token_expires = datetime.utcnow() + timedelta(hours=24)
         db.commit()
-
         return token
 
     @staticmethod

@@ -76,6 +76,7 @@ export default function Dashboard() {
 
   const h = new Date().getHours()
   const greet = h < 12 ? 'Mirëmëngjes' : h < 18 ? 'Mirëdita' : 'Mirëmbrëma'
+  const today = new Date().toLocaleDateString('sq-AL', { weekday:'long', day:'numeric', month:'long' })
 
   const statColors = ['var(--accent)', 'var(--blue)', 'var(--yellow)', 'var(--green)']
 
@@ -95,9 +96,9 @@ export default function Dashboard() {
 
   return (
     <div className="fade-up">
-      <PageHeader title={`${greet}!`} subtitle="Ja çfarë po ndodh me flotën tuaj sot."
+      <PageHeader title={`${greet}`} subtitle={`${today.charAt(0).toUpperCase() + today.slice(1)} — ja çfarë po ndodh me flotën.`}
         actions={
-          <Link to="/bookings" style={{ display:'inline-flex', alignItems:'center', gap:7, height:40, padding:'0 18px', background:'var(--accent)', color:'#0c0e14', borderRadius:'var(--r)', fontWeight:700, fontSize:'.875rem', textDecoration:'none' }}>
+          <Link to="/bookings" style={{ display:'inline-flex', alignItems:'center', gap:7, height:42, padding:'0 18px', background:'var(--accent)', color:'#0c0e14', borderRadius:12, fontWeight:700, fontSize:'.875rem', textDecoration:'none' }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 5v14M5 12h14"/></svg>
             Rezervim i ri
           </Link>
@@ -108,7 +109,7 @@ export default function Dashboard() {
         <div style={{ display:'flex', justifyContent:'center', padding:60 }}><Spinner size={36} /></div>
       ) : (
         <>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:16, marginBottom:24 }}>
+          <div className="stats-grid">
             {statsRows.map((s, i) => (
               <Link key={s.label} to={s.to} style={{ textDecoration:'none' }}>
                 <StatCard label={s.label} value={s.value} icon={statIcons[i]} color={statColors[i]} />
@@ -116,7 +117,7 @@ export default function Dashboard() {
             ))}
           </div>
 
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+          <div className="two-col">
             <RecentList title="Rezervimet e fundit" to="/bookings" items={recentBookings} empty="Asnjë rezervim ende"
               renderItem={b => (
                 <ItemRow key={b.id} to={`/bookings/${b.id}`}>

@@ -22,7 +22,15 @@ class Company(Base):
     website_url = Column(String(255))
     logo_path = Column(String(500))
     cover_path = Column(String(500))
-    is_published = Column(Boolean, default=False, nullable=False)
+    brand_primary = Column(String(7), default="#0f6e6a")
+    brand_accent = Column(String(7), default="#e07a3d")
+    hero_title = Column(String(200))
+    hero_subtitle = Column(Text)
+    page_sections = Column(Text)
+    is_published = Column(Boolean, default=False, nullable=False)  # subdomain live
+    listed_on_market = Column(Boolean, default=False, nullable=False)  # appears on Mix marketplace
+    is_suspended = Column(Boolean, default=False, nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False

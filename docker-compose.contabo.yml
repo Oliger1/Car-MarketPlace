@@ -1,0 +1,100 @@
+# Contabo / shared VPS — bashkëjetesë me nginx ekzistues (oltech).
+# Pa Caddy. Porte vetëm në 127.0.0.1 që të mos përplasen me oltech:8000.
+#
+#   cp env.contabo.example .env   # plotëso DOMAIN, SECRET_KEY, RESEND, …
+#   docker compose -f docker-compose.contabo.yml up -d --build
+#
+# Nginx → 127.0.0.1:3001 (web) dhe 127.0.0.1:8001 (api)
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: mix-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mix}
+      POSTGRES_USER: ${POSTGRES_USER:-mix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      TZ: Europe/Tirane
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d
+    networks:
+      - mix-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mix} -d ${POSTGRES_DB:-mix}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # PA ports: — Postgres vetëm brenda Docker network
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: ../../infra/docker/api.Dockerfile
+    container_name: mix-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8001:8000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mix}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-mix}
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://${DOMAIN}}
+      UPLOAD_DIR: /uploads
+      MAX_UPLOAD_SIZE: ${MAX_UPLOAD_SIZE:-5242880}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      DOMAIN: ${DOMAIN:?set DOMAIN}
+      APP_URL: ${APP_URL:-https://${DOMAIN}}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Mix <noreply@${DOMAIN}>}
+      PLATFORM_ADMIN_EMAILS: ${PLATFORM_ADMIN_EMAILS:-admin@${DOMAIN}}
+      TZ: Europe/Tirane
+    volumes:
+      - uploads_data:/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - mix-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  web:
+    build:
+      context: ./apps/mix-frontend
+      dockerfile: ../../infra/docker/web.Dockerfile
+      args:
+        NEXT_PUBLIC_ROOT_DOMAIN: ${DOMAIN}
+        NEXT_PUBLIC_APP_PROTOCOL: https
+        # Port bosh = URL pa :port (prod HTTPS)
+        NEXT_PUBLIC_APP_PORT: ""
+    container_name: mix-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3000"
+    environment:
+      API_URL: http://api:8000
+      NEXT_PUBLIC_ROOT_DOMAIN: ${DOMAIN}
+      NEXT_PUBLIC_APP_PROTOCOL: https
+      NEXT_PUBLIC_APP_PORT: ""
+      TZ: Europe/Tirane
+    depends_on:
+      - api
+    networks:
+      - mix-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  mix-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  uploads_data:

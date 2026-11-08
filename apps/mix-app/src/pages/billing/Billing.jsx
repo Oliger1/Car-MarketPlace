@@ -16,6 +16,7 @@ function PlanCard({ plan, currentPlanId, status, onSelect, loadingId }) {
       border: `2px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
       borderRadius: 'var(--r-xl)', padding: 28, position: 'relative',
       transition: 'all var(--t)',
+      backgroundImage: active ? 'linear-gradient(180deg, rgba(240,180,41,0.08), transparent 50%)' : 'linear-gradient(180deg, rgba(255,255,255,0.03), transparent 40%)',
     }}>
       {active && (
         <div style={{ position:'absolute', top:-12, left:'50%', transform:'translateX(-50%)', background:'var(--accent)', color:'#0c0e14', padding:'3px 14px', borderRadius:99, fontSize:'.68rem', fontWeight:800, letterSpacing:'.06em', whiteSpace:'nowrap' }}>
@@ -107,7 +108,7 @@ export default function Billing() {
       {plans.length > 0 && (
         <>
           <h3 style={{ fontSize:'1.05rem', marginBottom:18 }}>Zgjedh planin</h3>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:20, marginBottom:40 }}>
+          <div className="plans-grid">
             {plans.map(plan => (
               <PlanCard key={plan.id} plan={plan} currentPlanId={sub?.plan_id} status={sub?.status} onSelect={selectPlan} loadingId={selectingId} />
             ))}

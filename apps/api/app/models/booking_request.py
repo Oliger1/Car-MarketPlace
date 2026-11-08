@@ -29,6 +29,7 @@ class BookingRequest(Base):
     )
     requester_name = Column(String(200), nullable=False)
     requester_phone = Column(String(50), nullable=False)
+    requester_email = Column(String(255), nullable=True)
     date_from = Column(Date, nullable=True)
     date_to = Column(Date, nullable=True)
     message = Column(Text)

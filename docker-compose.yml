@@ -1,14 +1,16 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
     image: postgres:16-alpine
     container_name: mix-db
     restart: unless-stopped
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-mix}
       POSTGRES_USER: ${POSTGRES_USER:-mix}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mixdev}
       TZ: Europe/Tirane
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -16,7 +18,7 @@ services:
     networks:
       - mix-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mix}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mix} -d ${POSTGRES_DB:-mix}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,13 +29,20 @@ services:
       dockerfile: ../../infra/docker/api.Dockerfile
     container_name: mix-api
     restart: unless-stopped
+    ports:
+      - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-mix}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-mix}
-      SECRET_KEY: ${SECRET_KEY}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-mix}:${POSTGRES_PASSWORD:-mixdev}@db:5432/${POSTGRES_DB:-mix}
+      SECRET_KEY: ${SECRET_KEY:-dev-only-change-me}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173}
       UPLOAD_DIR: /uploads
       MAX_UPLOAD_SIZE: ${MAX_UPLOAD_SIZE:-5242880}
       ENVIRONMENT: ${ENVIRONMENT:-production}
+      DOMAIN: ${DOMAIN:-localhost}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-Mix <noreply@mix.al>}
+      PLATFORM_ADMIN_EMAILS: ${PLATFORM_ADMIN_EMAILS:-admin@mix.al}
       TZ: Europe/Tirane
     volumes:
       - uploads_data:/uploads
@@ -50,20 +59,25 @@ services:
 
   web:
     build:
-      context: ./apps/web-complete1
-      dockerfile: ../../infra/docker/web-complete1.Dockerfile
-    container_name: mix-web-complete1
+      context: ./apps/mix-frontend
+      dockerfile: ../../infra/docker/web.Dockerfile
+      args:
+        NEXT_PUBLIC_ROOT_DOMAIN: ${DOMAIN:-localhost}
+        NEXT_PUBLIC_APP_PROTOCOL: ${NEXT_PUBLIC_APP_PROTOCOL:-https}
+        NEXT_PUBLIC_APP_PORT: ${NEXT_PUBLIC_APP_PORT:-3000}
+    container_name: mix-web
     restart: unless-stopped
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost/api}
-      API_URL: http://api:8000/api
+      API_URL: http://api:8000
+      NEXT_PUBLIC_ROOT_DOMAIN: ${DOMAIN:-localhost}
+      NEXT_PUBLIC_APP_PROTOCOL: ${NEXT_PUBLIC_APP_PROTOCOL:-https}
       TZ: Europe/Tirane
     depends_on:
       - api
     networks:
       - mix-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5173"]
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:3000"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -86,7 +100,7 @@ services:
       - caddy_config:/config
       - uploads_data:/var/mix/uploads:ro
     depends_on:
-      - web-complete1
+      - web
       - api
     networks:
       - mix-network

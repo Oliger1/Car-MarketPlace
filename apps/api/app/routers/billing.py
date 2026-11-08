@@ -1,7 +1,7 @@
 """
 Billing Router
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from uuid import UUID
@@ -19,6 +19,7 @@ from app.schemas.billing import (
     InvoiceResponse,
 )
 from app.services.billing_service import BillingService
+from fastapi import status as http_status
 
 router = APIRouter()
 
@@ -43,10 +44,12 @@ async def choose_plan(
         db: Session = Depends(get_db)
 ):
     """
-    Ndrysho planin
+    Self-serve plan change disabled — plans are assigned by platform admin (cash).
     """
-    subscription = BillingService.change_plan(db, company_id, data.plan_id)
-    return SubscriptionResponse.model_validate(subscription)
+    raise HTTPException(
+        status_code=http_status.HTTP_403_FORBIDDEN,
+        detail="Ndryshimi i planit bëhet nga administratori (pagesë cash). Kontaktoni Mix.",
+    )
 
 
 @router.get("/plans", response_model=List[PlanResponse])

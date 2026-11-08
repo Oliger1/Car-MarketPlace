@@ -22,5 +22,5 @@ jobs:
             docker compose pull || true
             docker compose build --no-cache
             docker compose up -d
-            docker compose exec -T api bash -lc "alembic upgrade head"
-            curl -fsS https://domain.com/api/health || exit 1
+            # Schema is applied by API startup (ensure_schema) — no Alembic
+            docker compose exec -T api curl -fsS http://localhost:8000/api/health || exit 1

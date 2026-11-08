@@ -2,7 +2,6 @@
 Image utilities
 """
 from PIL import Image
-import piexif
 from typing import Tuple
 import io
 

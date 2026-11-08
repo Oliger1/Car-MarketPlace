@@ -1,7 +1,7 @@
 """
 Auth Router
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, status, Response, BackgroundTasks, Request
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -14,9 +14,38 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.services.auth_service import AuthService
+from app.services.email_service import EmailService
 from app.core.security import create_access_token
 from app.core.rate_limit import limiter
-from fastapi import Request
+from app.core.config import settings
+
+
+COOKIE_MAX_AGE = 60 * 60 * 24 * 7
+
+
+def set_auth_cookie(response: Response, token: str) -> None:
+    kwargs = {
+        "key": "access_token",
+        "value": token,
+        "httponly": True,
+        "secure": settings.is_production,
+        "samesite": "lax",
+        "path": "/",
+        "max_age": COOKIE_MAX_AGE,
+    }
+    domain = settings.cookie_domain()
+    if domain:
+        kwargs["domain"] = domain
+    response.set_cookie(**kwargs)
+
+
+def clear_auth_cookie(response: Response) -> None:
+    kwargs = {"key": "access_token", "path": "/"}
+    domain = settings.cookie_domain()
+    if domain:
+        kwargs["domain"] = domain
+    response.delete_cookie(**kwargs)
+
 
 router = APIRouter()
 
@@ -27,26 +56,18 @@ async def register(
         request: Request,
         data: UserRegister,
         response: Response,
+        background_tasks: BackgroundTasks,
         db: Session = Depends(get_db)
 ):
     """
     Regjistro kompani të re me owner user
     """
-    # Create company and user
     user = AuthService.register_company(db, data)
 
-    # Create access token
     access_token = create_access_token(data={"sub": str(user.id)})
+    set_auth_cookie(response, access_token)
 
-    # Set cookie
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        secure=True,
-        samesite="lax",
-        max_age=60 * 60 * 24 * 7  # 7 days
-    )
+    background_tasks.add_task(EmailService.send_welcome, user.email, data.company_name)
 
     return LoginResponse(
         user=UserResponse.model_validate(user),
@@ -65,21 +86,10 @@ async def login(
     """
     Hyr në llogari
     """
-    # Authenticate user
     user = AuthService.authenticate_user(db, data.email, data.password)
 
-    # Create access token
     access_token = create_access_token(data={"sub": str(user.id)})
-
-    # Set cookie
-    response.set_cookie(
-        key="access_token",
-        value=access_token,
-        httponly=True,
-        secure=True,
-        samesite="lax",
-        max_age=60 * 60 * 24 * 7  # 7 days
-    )
+    set_auth_cookie(response, access_token)
 
     return LoginResponse(
         user=UserResponse.model_validate(user),
@@ -92,8 +102,7 @@ async def logout(response: Response):
     """
     Dil nga llogaria
     """
-    # Clear cookie
-    response.delete_cookie(key="access_token")
+    clear_auth_cookie(response)
 
     return {"message": "Dolët me sukses"}
 
@@ -103,19 +112,23 @@ async def logout(response: Response):
 async def forgot_password(
         request: Request,
         data: ForgotPassword,
+        background_tasks: BackgroundTasks,
         db: Session = Depends(get_db)
 ):
     """
     Dërgo token për rivendosje fjalëkalimi
     """
     token = AuthService.initiate_password_reset(db, data.email)
-
-    # In production, send email with token
-    # For MVP, return token directly (remove in production!)
-    return {
+    payload = {
         "message": "Nëse email-i ekziston, do të merrni një link për rivendosje",
-        "token": token  # REMOVE THIS IN PRODUCTION!
     }
+    if token:
+        reset_url = f"{settings.APP_URL.rstrip('/')}/reset-password?token={token}"
+        background_tasks.add_task(EmailService.send_password_reset, data.email, reset_url)
+        if not settings.is_production:
+            payload["token"] = token
+            payload["reset_url"] = reset_url
+    return payload
 
 
 @router.post("/reset-password")

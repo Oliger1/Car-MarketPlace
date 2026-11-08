@@ -13,7 +13,7 @@ engine = create_engine(
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
-    echo=settings.ENVIRONMENT == "development"
+    echo=False,
 )
 
 # Create base class
@@ -32,3 +32,4 @@ from app.models.car_photo import CarPhoto
 from app.models.customer import Customer
 from app.models.booking import Booking
 from app.models.booking_request import BookingRequest
+from app.models.platform_setting import PlatformSetting

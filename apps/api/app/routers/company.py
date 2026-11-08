@@ -56,7 +56,7 @@ async def upload_logo(
     Ngarko logo e kompanisë
     """
     # Validate file
-    if file.content_type not in settings.ALLOWED_IMAGE_TYPES:
+    if file.content_type not in settings.get_allowed_image_types():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Formati i fotove jo i vlefshëm"
@@ -119,7 +119,7 @@ async def upload_cover(
     Ngarko cover photo e kompanisë
     """
     # Same logic as logo
-    if file.content_type not in settings.ALLOWED_IMAGE_TYPES:
+    if file.content_type not in settings.get_allowed_image_types():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Formati i fotove jo i vlefshëm"

@@ -54,13 +54,13 @@ def create_password_reset_token(email: str) -> str:
     """Create password reset token"""
     expire = datetime.utcnow() + timedelta(hours=24)
     to_encode = {"email": email, "exp": expire, "type": "password_reset"}
-    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
 def verify_password_reset_token(token: str) -> Optional[str]:
     """Verify password reset token and return email"""
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         if payload.get("type") != "password_reset":
             return None
         return payload.get("email")

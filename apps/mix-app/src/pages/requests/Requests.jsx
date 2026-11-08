@@ -143,7 +143,7 @@ export function RequestDetail() {
           </Button>
         )}
       />
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 300px', gap:20 }}>
+      <div className="split-layout">
         <Card>
           <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>

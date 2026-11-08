@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="sq">
+<head><meta charset="utf-8"><title>Faturë e re</title></head>
+<body style="font-family:Segoe UI,Arial,sans-serif;line-height:1.5;color:#1a1a1a;max-width:560px;margin:0 auto;padding:24px;">
+  <p style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#0f6e6a;margin:0 0 8px;">Mix</p>
+  <h1 style="font-size:22px;margin:0 0 16px;">Faturë e re</h1>
+  <p>Përshëndetje {{company_name}},</p>
+  <p>Është lëshuar një faturë për abonimin tuaj.</p>
+  <ul>
+    <li><strong>Shuma:</strong> {{amount}} {{currency}}</li>
+    <li><strong>Afati:</strong> {{due_date}}</li>
+    <li><strong>Shënime:</strong> {{notes}}</li>
+  </ul>
+  <p style="margin:24px 0;"><a href="{{billing_url}}" style="display:inline-block;background:#0f6e6a;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;">Shiko faturimin</a></p>
+  <p style="font-size:12px;color:#999;">{{app_url}}</p>
+</body>
+</html>

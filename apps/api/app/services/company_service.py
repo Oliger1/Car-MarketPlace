@@ -1,6 +1,7 @@
 """
 Company Service
 """
+import json
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from uuid import UUID
@@ -75,7 +76,13 @@ class CompanyService:
 
         # Update fields
         for field, value in data.model_dump(exclude_unset=True).items():
+            if field == "page_sections" and value is not None:
+                value = json.dumps(value)
             setattr(company, field, value)
+
+        # Closing the storefront also removes the company from Mix search.
+        if not company.is_published:
+            company.listed_on_market = False
 
         db.commit()
         db.refresh(company)
@@ -94,7 +101,12 @@ class CompanyService:
         Search published companies
         Returns (companies, total_count)
         """
-        query = db.query(Company).filter(Company.is_published == True)
+        query = db.query(Company).filter(
+            Company.is_published.is_(True),
+            Company.listed_on_market.is_(True),
+            Company.is_suspended.is_(False),
+            Company.deleted_at.is_(None),
+        )
 
         # Filter by city
         if city:

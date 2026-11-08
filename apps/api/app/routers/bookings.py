@@ -1,8 +1,8 @@
 """
 Bookings Router
 """
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional
 from uuid import UUID
 
@@ -13,7 +13,9 @@ from app.deps.pagination import get_pagination_params, PaginationParams
 from app.models.user import User
 from app.schemas.booking import BookingCreate, BookingUpdate, BookingResponse
 from app.services.booking_service import BookingService
+from app.services.email_service import EmailService
 from app.models.booking import Booking
+from app.models.company import Company
 from app.models.car import Car
 from datetime import datetime, date
 
@@ -144,6 +146,7 @@ async def update_booking(
 @router.delete("/{booking_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_booking(
         booking_id: UUID,
+        background_tasks: BackgroundTasks,
         company_id: UUID = Depends(require_company_id),
         current_user: User = Depends(require_staff_or_owner),
         db: Session = Depends(get_db)
@@ -153,10 +156,12 @@ async def cancel_booking(
     """
     from app.models.booking import Booking, BookingStatus
 
-    booking = db.query(Booking).filter(
-        Booking.id == booking_id,
-        Booking.company_id == company_id
-    ).first()
+    booking = (
+        db.query(Booking)
+        .options(joinedload(Booking.customer))
+        .filter(Booking.id == booking_id, Booking.company_id == company_id)
+        .first()
+    )
 
     if not booking:
         raise HTTPException(
@@ -166,5 +171,16 @@ async def cancel_booking(
 
     booking.status = BookingStatus.CANCELLED
     db.commit()
+
+    company = db.query(Company).filter(Company.id == company_id).first()
+    if booking.customer and booking.customer.email:
+        background_tasks.add_task(
+            EmailService.send_booking_cancelled,
+            booking.customer.email,
+            booking.customer.name,
+            company.name if company else "",
+            str(booking.date_from),
+            str(booking.date_to),
+        )
 
     return None

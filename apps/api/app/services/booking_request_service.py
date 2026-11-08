@@ -10,6 +10,7 @@ from app.models.booking_request import BookingRequest, BookingRequestStatus
 from app.models.booking import Booking, BookingStatus
 from app.models.company import Company
 from app.models.car import Car
+from app.models.customer import Customer
 from app.schemas.booking_request import BookingRequestCreate, BookingRequestConvert
 from app.utils.ip import get_client_ip
 
@@ -48,6 +49,7 @@ class BookingRequestService:
             car_id=car_id,
             requester_name=data.requester_name,
             requester_phone=data.requester_phone,
+            requester_email=str(data.requester_email).strip().lower(),
             date_from=data.date_from,
             date_to=data.date_to,
             message=data.message,
@@ -84,14 +86,33 @@ class BookingRequestService:
         if not booking_request.car_id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Kërkesa nuk ka makinë të specifikuar"
+                detail="Kërkesa nuk ka makinë të specifikuar. Shto makinën para konvertimit."
             )
+
+        customer_id = data.customer_id
+        if not customer_id:
+            customer = Customer(
+                company_id=company_id,
+                name=booking_request.requester_name,
+                phone=booking_request.requester_phone,
+                email=(booking_request.requester_email or None),
+            )
+            db.add(customer)
+            db.flush()
+            customer_id = customer.id
+        elif booking_request.requester_email:
+            customer = db.query(Customer).filter(
+                Customer.id == customer_id,
+                Customer.company_id == company_id,
+            ).first()
+            if customer and not customer.email:
+                customer.email = booking_request.requester_email
 
         # Create booking
         booking = Booking(
             company_id=company_id,
             car_id=booking_request.car_id,
-            customer_id=data.customer_id,
+            customer_id=customer_id,
             request_id=request_id,
             date_from=data.date_from,
             date_to=data.date_to,

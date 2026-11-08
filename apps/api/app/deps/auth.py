@@ -9,6 +9,7 @@ from uuid import UUID
 from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.core.security import decode_access_token
+from app.core.config import settings
 
 
 async def get_current_user(
@@ -24,7 +25,6 @@ async def get_current_user(
             detail="Nuk jeni të kyçur",
         )
 
-    # Decode token
     payload = decode_access_token(access_token)
     user_id: str = payload.get("sub")
 
@@ -34,7 +34,6 @@ async def get_current_user(
             detail="Token nuk është i vlefshëm",
         )
 
-    # Get user from database
     user = db.query(User).filter(User.id == UUID(user_id)).first()
 
     if user is None:
@@ -53,11 +52,6 @@ async def get_current_user(
 
 
 def require_role(allowed_roles: List[str]):
-    """
-    Dependency factory to check user role
-    Usage: current_user = Depends(require_role(["owner", "staff"]))
-    """
-
     async def role_checker(current_user: User = Depends(get_current_user)) -> User:
         if current_user.role.value not in allowed_roles:
             raise HTTPException(
@@ -69,9 +63,7 @@ def require_role(allowed_roles: List[str]):
     return role_checker
 
 
-# Shortcuts
 async def require_owner(current_user: User = Depends(get_current_user)) -> User:
-    """Require OWNER role"""
     if current_user.role != UserRole.OWNER:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -81,10 +73,24 @@ async def require_owner(current_user: User = Depends(get_current_user)) -> User:
 
 
 async def require_staff_or_owner(current_user: User = Depends(get_current_user)) -> User:
-    """Require STAFF or OWNER role"""
     if current_user.role not in [UserRole.OWNER, UserRole.STAFF]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Nuk keni leje për këtë veprim",
+        )
+    return current_user
+
+
+async def require_platform_admin(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> User:
+    """Platform admin via .env allowlist + extra emails in platform_settings."""
+    from app.services.platform_service import is_platform_admin
+
+    if not is_platform_admin(db, current_user.email):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vetëm administratori i platformës mund të kryejë këtë veprim",
         )
     return current_user

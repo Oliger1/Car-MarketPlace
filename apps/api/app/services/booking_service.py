@@ -177,7 +177,13 @@ class BookingService:
         """
         query = db.query(Booking).filter(
             Booking.car_id == car_id,
-            Booking.status.in_([BookingStatus.CONFIRMED, BookingStatus.ACTIVE])
+            Booking.status.in_(
+                [
+                    BookingStatus.CONFIRMED,
+                    BookingStatus.ACTIVE,
+                    BookingStatus.REQUESTED,
+                ]
+            ),
         )
 
         if date_from:

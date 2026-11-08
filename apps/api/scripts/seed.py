@@ -9,9 +9,12 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from sqlalchemy.exc import IntegrityError
+
 from app.core.config import settings
 from app.core.security import get_password_hash
 from app.db.base import Base, engine
+from app.db.ensure_schema import ensure_schema
 from app.db.session import SessionLocal
 from app.models.car import Car, CarStatus, FuelType, TransmissionType
 from app.models.car_photo import CarPhoto
@@ -85,7 +88,12 @@ def ensure_company_fleet(db, company: Company, cars_data: list[dict]):
 
 def seed():
     print("Seeding database...")
-    Base.metadata.create_all(bind=engine)
+    # API startup usually already created tables/enums; ignore PG enum races.
+    try:
+        Base.metadata.create_all(bind=engine)
+    except IntegrityError as exc:
+        print(f"create_all: schema already present ({exc.__class__.__name__})")
+    ensure_schema()
     db = SessionLocal()
 
     try:
